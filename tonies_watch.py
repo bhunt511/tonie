@@ -31,6 +31,7 @@ except ImportError:                # Python 3.8
     from backports.zoneinfo import ZoneInfo  # type: ignore
 
 from dotenv import load_dotenv
+import logging
 
 # ─────────────── CLI flag ──────────────────────────────────────────────────
 ap = argparse.ArgumentParser(description="Watch Ms Rachel Tonie stock")
@@ -66,6 +67,14 @@ URL_JS     = f"{URL}.js"
 CHECK_EVERY = 300  # seconds (5 min) — ignored in test mode
 TZ         = ZoneInfo("America/New_York")
 
+# ─────────────── Logging setup ─────────────────────────────────────────────
+logging.basicConfig(
+    filename='tonie_watch.log',
+    level=logging.INFO,
+    format='%(asctime)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+
 # ─────────────── Helper: send notification via IFTTT ──────────────────────
 def send_notification(message: str) -> None:
     """Send notification via IFTTT webhook."""
@@ -75,8 +84,10 @@ def send_notification(message: str) -> None:
         resp = requests.post(url, data={'value1': message}, timeout=10)
         resp.raise_for_status()
         print(f"✅ IFTTT notification sent: {resp.status_code}")
+        logging.info(f"NOTIFICATION SENT: {message}")
     except Exception as e:
         print(f"⚠️  IFTTT notification error: {e}")
+        logging.error(f"NOTIFICATION FAILED: {e}")
 
 # ─────────────── Stock check helper ────────────────────────────────────────
 def is_in_stock() -> bool:
@@ -149,6 +160,8 @@ while True:
 
         # Stock check
         in_stock = is_in_stock()
+        status = "IN STOCK" if in_stock else "OUT OF STOCK"
+        logging.info(f"CHECK: {status}")
         total_checks += 1
         if in_stock:
             hits += 1
