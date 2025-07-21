@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """
-Ms Rachel Tonie Stock Watcher
+Ms Rachel Tonie Stock Watcher
 ─────────────────────────────
-• Polls the Tonies product JSON every 5 minutes
-• Sends an immediate SMS alert (AWS SNS) when the variant flips to *IN STOCK*
-• Sends a daily 7 p.m. Eastern summary SMS
+• Polls the Tonies product JSON every 5 minutes
+• Sends an immediate SMS alert (IFTTT) when the variant flips to *IN STOCK*
+• Sends a daily 7 p.m. Eastern summary SMS
 • ALL messages include the product URL
 
 Extra flag
 ----------
-Run with `--test` (or `-t`) to send ONE simulated in‑stock alert immediately,
-print the full SNS response(s) to the console for troubleshooting, and exit.
+Run with `--test` (or `-t`) to send ONE simulated in-stock alert immediately,
+print the full IFTTT response(s) to the console for troubleshooting, and exit.
 
 Requirements
 ------------
-requests, boto3, python-dotenv
-(backports.zoneinfo if you’re on Python 3.8)
+requests, python-dotenv
+(backports.zoneinfo if you’re on Python 3.8)
 """
 
 import os
@@ -26,19 +26,19 @@ import requests
 from datetime import datetime, date, time as dtime, timedelta
 
 try:
-    from zoneinfo import ZoneInfo  # Python 3.9+
-except ImportError:                # Python 3.8
+    from zoneinfo import ZoneInfo  # Python 3.9+
+except ImportError:                # Python 3.8
     from backports.zoneinfo import ZoneInfo  # type: ignore
 
 from dotenv import load_dotenv
 import logging
 
 # ─────────────── CLI flag ──────────────────────────────────────────────────
-ap = argparse.ArgumentParser(description="Watch Ms Rachel Tonie stock")
+ap = argparse.ArgumentParser(description="Watch Ms Rachel Tonie stock")
 ap.add_argument(
     "-t", "--test",
     action="store_true",
-    help="single‑shot test: assume in‑stock, print SNS responses, exit"
+    help="single-shot test: assume in-stock, print IFTTT responses, exit"
 )
 ap.add_argument(
     "-s", "--stock-test",
@@ -64,7 +64,7 @@ URL        = "https://us.tonies.com/products/ms-rachel-tonie" #Ms Rachel Tonie
 #URL = "https://us.tonies.com/products/mindfulness-movement-with-marty-the-monkey-tonie" #Test Monkey Thing
 
 URL_JS     = f"{URL}.js"
-CHECK_EVERY = 300  # seconds (5 min) — ignored in test mode
+CHECK_EVERY = 300  # seconds (5 min) ─ ignored in test mode
 TZ         = ZoneInfo("America/New_York")
 
 # ─────────────── Logging setup ─────────────────────────────────────────────
@@ -102,22 +102,22 @@ def is_in_stock() -> bool:
 def daily_summary(total, hits, last_seen, in_stock_flag):
     status = "IN STOCK" if in_stock_flag else "OUT OF STOCK"
     send_notification(
-        f"Ms Rachel Tonie summary {date.today()}:\n"
+        f"Ms Rachel Tonie summary {date.today()}:\n"
         f"• checks run: {total}\n"
         f"• times in stock: {hits}\n"
-        f"• last check: {status} @ {last_seen.strftime('%I:%M %p')}\n"
+        f"• last check: {status} @ {last_seen.strftime('%I:%M %p')}\n"
         f"{URL}"
     )
 
-# ─────────────── Test‑mode shortcut ────────────────────────────────────────
+# ─────────────── Test-mode shortcut ────────────────────────────────────────
 if args.test:
-    print("🧪 TEST MODE — sending simulated in‑stock alert …")
-    send_notification(f"🚨 TEST: Ms Rachel Tonie is IN STOCK!\n{URL}")
+    print("🧪 TEST MODE ─ sending simulated in-stock alert …")
+    send_notification(f"🚨 TEST: Ms Rachel Tonie is IN STOCK!\n{URL}")
     print("Test alert sent; exiting.")
     sys.exit(0)
 
 if args.stock_test:
-    print("📊 STOCK TEST MODE — checking actual stock status …")
+    print("📊 STOCK TEST MODE ─ checking actual stock status …")
     try:
         print(f"Fetching from: {URL_JS}")
         print(f"Looking for variant ID: {VARIANT_ID}")
@@ -139,7 +139,7 @@ if args.stock_test:
     sys.exit(0)
 
 # ─────────────── Normal loop ───────────────────────────────────────────────
-print("🔍  Watching Ms Rachel Tonie every 5 minutes …")
+print("🔍  Watching Ms Rachel Tonie every 5 minutes …")
 
 total_checks = hits = 0
 last_state   = None
@@ -152,7 +152,7 @@ while True:
     try:
         now = datetime.now(TZ)
 
-        # Daily 7 p.m. summary
+        # Daily 7 p.m. summary
         if now >= next_7pm:
             daily_summary(total_checks, hits, now, last_state)
             total_checks = hits = 0
@@ -166,7 +166,7 @@ while True:
         if in_stock:
             hits += 1
             if last_state in (None, False):
-                send_notification(f"🚨 Ms Rachel Tonie is IN STOCK!\n{URL}")
+                send_notification(f"🚨 Ms Rachel Tonie is IN STOCK!\n{URL}")
         last_state = in_stock
 
     except Exception as e:
