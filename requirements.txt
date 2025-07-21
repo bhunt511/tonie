@@ -1,4 +1,3 @@
 requests>=2.27
-boto3>=1.30
 python-dotenv>=1.0
 # backports.zoneinfo>=0.2.1   # ← uncomment if your Pi is on Python 3.8
